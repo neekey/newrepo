@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+var program = require( 'commander' );
+var mkdirp = require('mkdirp');
+var os = require('os');
+var fs = require('fs');
+var packageInfo = require( '../package.json' );
+var Path = require( 'path' );
+var eol = 'win32' == os.platform() ? '\r\n' : '\n';
+// Path
+var path = program.args.shift() || '.';
+
+program
+    .version( packageInfo.version )
+    .parse(process.argv);
+
+var repoInfo = {
+    name: 'undefined-repo',
+    description: 'It\'s an simply repo.',
+    author: '',
+    email: ''
+};
+
+var directory = {
+
+    'readme.md': [
+        repoInfo.name,
+        '=======',
+        '',
+        repoInfo.description
+    ].join(eol),
+
+    'package.json': [
+        '{',
+        '   "name": "' + repoInfo.name + '",',
+        '   "description": "' + repoInfo.description + '",',
+        '   "version": "0.0.1",',
+        '   "author": "' + repoInfo.author + ' ' + repoInfo.email + '",',
+        '   "keywords": [ "' + repoInfo.name + '" ],',
+        '   "main": "index.js",',
+        '   "bin": {',
+        '   },',
+        '   "repository": {',
+        '       "type": "git",',
+        '       "url": "git@github.com:' + repoInfo.author + '/' + repoInfo.name + '.git",',
+        '   },',
+        '   "dependencies": {',
+        '   }',
+        '}'
+    ].join(eol),
+
+    '.gitignore': [
+    ].join(eol),
+
+    'lib': {},
+
+    'examples': {},
+
+    'test': {}
+};
+
+
+
+program.prompt('RepoName: ', function(name){
+    console.log('You repo name is "%s"', name);
+    repoInfo.name = name;
+
+    program.prompt('Description: ', function(desc){
+        console.log('You repo description is "%s"', desc.trim());
+        repoInfo.description = desc.trim();
+
+        program.prompt('Author: ', function( author ){
+            console.log('The author of this repo is "%s"', author );
+            repoInfo.author = author;
+
+            program.prompt('Email: ', function( email ){
+                console.log('You email is "%s"', email);
+                repoInfo.email = email;
+                process.stdin.destroy();
+
+                console.log( 'test' );
+                console.log( repoInfo );
+//                buildDirectory( repoInfo.name, directory );
+
+            });
+        });
+    });
+});
+
+
+
+
+function buildDirectory( dirName, dirObj ){
+
+    dirName = Path.resolve( path, dirName );
+    mkdirp( dirName );
+
+    console.log( dirName );
+
+    var name;
+    var value;
+    var subPath;
+    var _arguments = arguments;
+
+    for( name in dirObj ){
+
+        value = dirObj[ name ];
+        subPath = Path.resolve( dirName, name );
+
+//        console.log( name, value, subPath );
+        if( typeof value === 'string' ){
+
+
+            fs.writeFile( subPath, value, function( err ){
+
+                if( err ){
+                    console.log( 'An error occurred when generate file %s', subPath );
+                }
+                else {
+                    console.log( 'Generate file: %s', subPath );
+                }
+            });
+        }
+        else if( typeof value === 'object' ){
+
+            arguments.callee( subPath, value );
+        }
+    }
+}
+
+
+

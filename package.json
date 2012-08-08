@@ -1,0 +1,19 @@
+{
+    "name": "newrepo",
+    "description": "A handy module to make a new repo directory with common files.",
+    "version": "0.0.1",
+    "author": "Neekey <ni184775761@gmail.com>",
+    "keywords": [ "newrepo" ],
+    "main": "DirWatcher.js",
+    "bin": { "newrepo": "./bin/newrepo" },
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:neekey/newrepo.git"
+    },
+    "dependencies": {
+        "commander": "*",
+        "mkdirp": "*",
+        "debug": "*"
+    }
+
+}
