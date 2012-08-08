@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+//todo 文件模板
+//todo 文件强制写入的问题
+
 var program = require( 'commander' );
 var mkdirp = require('mkdirp');
 var os = require('os');
