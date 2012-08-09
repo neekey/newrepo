@@ -1,17 +1,26 @@
 #!/usr/bin/env node
 
-//todo 文件模板
-//todo 文件强制写入的问题
+//todo Forcing writing.
 
 var program = require( 'commander' );
 var mkdirp = require('mkdirp');
-var os = require('os');
-var fs = require('fs');
+var fs = require( 'fs' );
 var packageInfo = require( '../package.json' );
 var Path = require( 'path' );
-var eol = 'win32' == os.platform() ? '\r\n' : '\n';
-// Path
-var path = program.args.shift() || '.';
+var Mustache = require( 'mustache' );
+var DirReader = require( 'dirreader' );
+var Debug = {
+    file: require( 'debug' )( 'file' ),
+    dir: require( 'debug' )( 'directory' ),
+    error: require( 'debug' )( 'error' ),
+    confirm: require( 'debug' )( 'confirm' )
+};
+
+// The directory that executing newrepo.
+var newRepoBasePath = process.cwd() || '.';
+// The template directory.
+var templateDirPath = '../template';
+var templateAbsoluteDirPath = Path.resolve( __dirname, templateDirPath );
 
 program
     .version( packageInfo.version )
@@ -21,48 +30,9 @@ var repoInfo = {
     name: 'undefined-repo',
     description: 'It\'s an simply repo.',
     author: '',
-    email: ''
+    email: '',
+    version: '0.0.1'
 };
-
-var directory = {
-
-    'readme.md': [
-        repoInfo.name,
-        '=======',
-        '',
-        repoInfo.description
-    ].join(eol),
-
-    'package.json': [
-        '{',
-        '   "name": "' + repoInfo.name + '",',
-        '   "description": "' + repoInfo.description + '",',
-        '   "version": "0.0.1",',
-        '   "author": "' + repoInfo.author + ' ' + repoInfo.email + '",',
-        '   "keywords": [ "' + repoInfo.name + '" ],',
-        '   "main": "index.js",',
-        '   "bin": {',
-        '   },',
-        '   "repository": {',
-        '       "type": "git",',
-        '       "url": "git@github.com:' + repoInfo.author + '/' + repoInfo.name + '.git",',
-        '   },',
-        '   "dependencies": {',
-        '   }',
-        '}'
-    ].join(eol),
-
-    '.gitignore': [
-    ].join(eol),
-
-    'lib': {},
-
-    'examples': {},
-
-    'test': {}
-};
-
-
 
 program.prompt('RepoName: ', function(name){
     console.log('You repo name is "%s"', name);
@@ -79,57 +49,78 @@ program.prompt('RepoName: ', function(name){
             program.prompt('Email: ', function( email ){
                 console.log('You email is "%s"', email);
                 repoInfo.email = email;
-                process.stdin.destroy();
 
-                console.log( 'test' );
-                console.log( repoInfo );
-//                buildDirectory( repoInfo.name, directory );
+                program.prompt('The initial version: ', function( version ){
+                    console.log('You email is "%s"', email);
+                    repoInfo.version = version;
 
+                    process.stdin.destroy();
+                    buildNewRepo();
+                });
             });
         });
     });
 });
 
+/**
+ * Build new repo directory
+ */
+function buildNewRepo(){
 
+    // The new repo directory path.
+    var targetRepoPath = Path.join( newRepoBasePath, repoInfo.name );
+    console.log( 'Generating your new repo to %s...', targetRepoPath );
 
+    // Copy template directory.
+    DirReader.readDirSync( templateAbsoluteDirPath, function( err, path, stats, ifDir ){
 
-function buildDirectory( dirName, dirObj ){
+        var relativePath = path.replace( templateAbsoluteDirPath, '');
+        var newPath = Path.join( targetRepoPath, relativePath );
 
-    dirName = Path.resolve( path, dirName );
-    mkdirp( dirName );
+        if( ifDir ){
 
-    console.log( dirName );
+            try {
+                mkdirp.sync( newPath );
+            }
+            catch( err ){
 
-    var name;
-    var value;
-    var subPath;
-    var _arguments = arguments;
-
-    for( name in dirObj ){
-
-        value = dirObj[ name ];
-        subPath = Path.resolve( dirName, name );
-
-//        console.log( name, value, subPath );
-        if( typeof value === 'string' ){
-
-
-            fs.writeFile( subPath, value, function( err ){
-
-                if( err ){
-                    console.log( 'An error occurred when generate file %s', subPath );
-                }
-                else {
-                    console.log( 'Generate file: %s', subPath );
-                }
-            });
+                throw new Error( 'A error occurred when making directory: ' + newPath );
+            }
         }
-        else if( typeof value === 'object' ){
+        else {
 
-            arguments.callee( subPath, value );
+            try{
+                var buff = fs.readFileSync( path );
+            }
+            catch( err ){
+                throw new Error( 'A error occurred when reading template file: ' + path );
+            }
+
+            // Create new file
+            if( Path.extname( path ) === '.mustache' ){
+
+                // Use mustache to render.
+                buff = buff.toString( 'utf8' );
+                buff = Mustache.render( buff, repoInfo );
+                // Remove `.mustache`
+                newPath = newPath.replace( /.mustache$/, '' );
+            }
+
+            try{
+                fs.writeFileSync( newPath, buff );
+            }
+            catch( err ){
+                throw new Error( 'A error occurred when writing file to your repo: ' + newPath );
+            }
         }
-    }
+
+        console.log( ( ifDir ? '[ Directory ] ' : '[ File ] ') + newPath );
+
+    }, function(){});
+
+    console.log( 'You new repo is READY! ENJOY it!' );
 }
+
 
 
 

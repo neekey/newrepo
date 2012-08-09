@@ -13,7 +13,8 @@
     "dependencies": {
         "commander": "*",
         "mkdirp": "*",
-        "debug": "*"
+        "debug": "*",
+        "mustache": "*",
+        "dirreader": "*"
     }
-
 }
