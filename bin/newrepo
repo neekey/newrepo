@@ -97,13 +97,19 @@ function buildNewRepo(){
             }
 
             // Create new file
-            if( Path.extname( path ) === '.mustache' ){
+            if( Path.extname( newPath ) === '.mustache' ){
 
                 // Use mustache to render.
                 buff = buff.toString( 'utf8' );
                 buff = Mustache.render( buff, repoInfo );
                 // Remove `.mustache`
                 newPath = newPath.replace( /.mustache$/, '' );
+            }
+
+            // If the file name include mustach template
+            if( /{{.*}}/.test( Path.basename( newPath ) ) ){
+
+                newPath = Mustache.render( newPath, repoInfo );
             }
 
             try{
