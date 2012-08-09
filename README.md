@@ -5,7 +5,7 @@ A handy command-tool to make a new repo directory with common things you need.
 
 ## Install
 ```
-npm install newrepo
+npm install newrepo -g
 ```
 
 ## Usage
