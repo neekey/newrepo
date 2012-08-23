@@ -51,11 +51,17 @@ program.prompt('RepoName: ', function(name){
                 repoInfo.email = email;
 
                 program.prompt('The initial version: ', function( version ){
-                    console.log('You email is "%s"', email);
+                    console.log('Your initial version will be "%s"', version);
                     repoInfo.version = version;
 
-                    process.stdin.destroy();
-                    buildNewRepo();
+                    program.confirm('If use MIT license?: (yes/no) ', function( ok ){
+                        console.log( ok );
+                        console.log('You license will be MIT', ok );
+                        repoInfo.ifMIT = ok;
+
+                        process.stdin.destroy();
+                        buildNewRepo();
+                    });
                 });
             });
         });
